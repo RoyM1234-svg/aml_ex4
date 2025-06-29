@@ -42,10 +42,10 @@ class GMM(torch.nn.Module):
         return eps * self.std()[comps].unsqueeze(1) + self.mu[comps]
 
 
-def plot_policy(policy, title_addon=''):
+def plot_policy(policy, title_addon='', num_samples=10000):
     with torch.no_grad():
         plt.figure(figsize=(6, 6))
-        x_samples = policy.sample(10000).cpu()
+        x_samples = policy.sample(num_samples).cpu()
         plt.scatter(x_samples[:, 0], x_samples[:, 1], s=2, alpha=0.2)
 
         g_probs = F.softmax(policy.logits).detach().cpu()
