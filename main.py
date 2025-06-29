@@ -8,13 +8,13 @@ from utils import custom_plot_policy, plot_combined_metrics
 import torch.nn.functional as F
 
 
-
 def rft(n_of_policy_updates: int, 
         update_points: list[int],
         device: torch.device,
         n_samples: int,
         n_epochs: int,
         reward_modification_f: Optional[Callable] = None,
+        is_ppo: bool = True,
         ):
     
     lr = 1e-2
@@ -31,7 +31,7 @@ def rft(n_of_policy_updates: int,
     base_policy = GMM(K=5, dim=2).to(device)
     base_policy.load_state_dict(torch.load('gmm_model.pth'))
 
-    loss_fn = RLLoss(clipping_coef=eps, is_ppo=True)
+    loss_fn = RLLoss(clipping_coef=eps, is_ppo=is_ppo)
     
     epoch_counter = 0  
     
@@ -90,6 +90,7 @@ def Q_5_2(device):
     rewards = single_mode_reward(samples)
     print("positive rewards: ", (rewards > 0).sum())
 
+
 def Q_5_3(device):
     def reward_modification_f(rewards: torch.Tensor) -> torch.Tensor:
         return torch.where(rewards < 0, torch.tensor(-1.0), torch.tensor(0.0))
@@ -97,7 +98,7 @@ def Q_5_3(device):
     saved_models, metrics = rft(n_of_policy_updates=20, update_points=[0, 4, 8, 10, 12, 16, 20], device=device, n_samples=10, n_epochs=100, reward_modification_f=reward_modification_f)
     plots_folder = "5_3_plots"
     
-    print(f"Saving plots to {plots_folder}/ folder...")
+    print(f"Saving plots to {plots_folder}/ folder")
     for policy_update, model_state_dict in saved_models.items():
         model = GMM(K=5, dim=2).to(device)
         model.load_state_dict(model_state_dict)
@@ -112,9 +113,6 @@ def Q_5_3(device):
             save_path=save_path
         )
     
-    print(f"All plots saved to {plots_folder}/ folder!")
-    
-    # Calculate expected rewards using 2000 samples
     update_indices, expected_rewards = calculate_expected_rewards(
         saved_models, device, reward_modification_f, n_eval_samples=2000
     )
@@ -171,20 +169,68 @@ def calculate_expected_rewards(saved_models, device, reward_modification_f=None,
     return update_indices, expected_rewards
 
 
+def Q_5_5(device):
+    saved_models, metrics = rft(n_of_policy_updates=20, update_points=[0, 5, 10], device=device, n_samples=10, n_epochs=100, is_ppo=False)
+    plots_folder = "5_5_plots"
+    for policy_update, model_state_dict in saved_models.items():
+        model = GMM(K=5, dim=2).to(device)
+        model.load_state_dict(model_state_dict)
+        
+        filename = f"policy_update_{policy_update}.png"
+        save_path = os.path.join(plots_folder, filename)
+
+        custom_plot_policy(
+            model, 
+            title=f'Policy Update {policy_update}',
+            num_samples=2000,
+            save_path=save_path
+        )
+
+def Q_5_6(device):
+    def reward_modification_f(rewards: torch.Tensor) -> torch.Tensor:
+        return rewards + 3.0
+    
+    saved_models, metrics = rft(n_of_policy_updates=20,  update_points=[0, 4, 8, 10, 12, 16, 20], device=device, n_samples=10, n_epochs=100, reward_modification_f=reward_modification_f)
+    plots_folder = "5_6_plots"
+    for policy_update, model_state_dict in saved_models.items():
+        model = GMM(K=5, dim=2).to(device)
+        model.load_state_dict(model_state_dict)
+
+        filename = f"policy_update_{policy_update}.png"
+        save_path = os.path.join(plots_folder, filename)
+
+        custom_plot_policy(
+            model, 
+            title=f'Policy Update {policy_update}',
+            num_samples=2000,
+            save_path=save_path
+        )
+
+
+        
+    
+
 def main(): 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    print("Running Q_5_3...")
-    metrics_5_3, update_indices_5_3, expected_rewards_5_3 = Q_5_3(device)
+    # print("Running Q_5_3...")
+    # metrics_5_3, update_indices_5_3, expected_rewards_5_3 = Q_5_3(device)
     
-    print("Running Q_5_4...")
-    metrics_5_4, update_indices_5_4, expected_rewards_5_4 = Q_5_4(device)
+    # print("Running Q_5_4...")
+    # metrics_5_4, update_indices_5_4, expected_rewards_5_4 = Q_5_4(device)
     
-    plot_combined_metrics(
-        metrics_5_3, update_indices_5_3, expected_rewards_5_3,
-        metrics_5_4, update_indices_5_4, expected_rewards_5_4,
-        save_prefix="Q_5_4_metrics/combined_metrics"
-    )
+    # plot_combined_metrics(
+    #     metrics_5_3, update_indices_5_3, expected_rewards_5_3,
+    #     metrics_5_4, update_indices_5_4, expected_rewards_5_4,
+    #     save_prefix="Q_5_4_metrics/combined_metrics"
+    # )
+
+    # Q_5_5(device)
+    Q_5_6(device)
+
+
+
+
     
         
 
