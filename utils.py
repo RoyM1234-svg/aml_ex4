@@ -9,17 +9,13 @@ import os
 def plot_combined_metrics(metrics_5_3, update_indices_5_3, expected_rewards_5_3,
                          metrics_5_4, update_indices_5_4, expected_rewards_5_4,
                          save_prefix=""):
-    """
-    Plot the three requested metrics with both methods in each figure
-    """
-    # Create directory if save_prefix is provided
+    
     if save_prefix:
         import os
         directory = os.path.dirname(save_prefix)
         if directory:
             os.makedirs(directory, exist_ok=True)
     
-    # Figure 1: Central Gaussian Probabilities along Epochs
     plt.figure(figsize=(12, 6))
     plt.plot(metrics_5_3['epoch_indices'], metrics_5_3['central_probs_epochs'], 
              'b-', linewidth=2, alpha=0.8, label='Q_5_3 (Modified Rewards)')
@@ -36,7 +32,6 @@ def plot_combined_metrics(metrics_5_3, update_indices_5_3, expected_rewards_5_3,
         print(f"Saved: {save_prefix}_central_probabilities.png")
     plt.show()
     
-    # Figure 2: Central Gaussian Standard Deviation along Epochs
     plt.figure(figsize=(12, 6))
     plt.plot(metrics_5_3['epoch_indices'], metrics_5_3['central_stds_epochs'], 
              'b-', linewidth=2, alpha=0.8, label='Q_5_3 (Modified Rewards)')
@@ -53,7 +48,6 @@ def plot_combined_metrics(metrics_5_3, update_indices_5_3, expected_rewards_5_3,
         print(f"Saved: {save_prefix}_central_std.png")
     plt.show()
     
-    # Figure 3: Expected Reward along Policy Updates
     plt.figure(figsize=(12, 6))
     plt.plot(update_indices_5_3, expected_rewards_5_3, 
              'b-o', linewidth=2, markersize=6, alpha=0.8, label='Q_5_3 (Modified Rewards)')
@@ -72,7 +66,6 @@ def plot_combined_metrics(metrics_5_3, update_indices_5_3, expected_rewards_5_3,
 
 
 def custom_plot_policy(policy, title=None, num_samples=2000, save_path=None):
-    """Custom plot function with full title control and save capability"""
     with torch.no_grad():
         plt.figure(figsize=(6, 6))
         x_samples = policy.sample(num_samples).cpu()
@@ -83,13 +76,12 @@ def custom_plot_policy(policy, title=None, num_samples=2000, save_path=None):
             cur_color = f"C{i}"
             circle = Circle(policy.mu[i].cpu(), 2 * policy.std()[i].cpu().item(), color=cur_color, fill=False, linewidth=2)
             plt.gca().add_patch(circle)
-            # set the intensity of the color to be the probability of the Gaussian
+            
             plt.scatter(*policy.mu[i].cpu(), color=cur_color, s=100, marker='x')
 
         plt.xlim(-10, 10)
         plt.ylim(-10, 10)
         
-        # Use custom title if provided, otherwise use default format
         if title is not None:
             plt.title(title)
         else:
@@ -103,12 +95,10 @@ def custom_plot_policy(policy, title=None, num_samples=2000, save_path=None):
         plt.ylabel('Y-axis')
         plt.grid()
         
-        # Save or show the plot
         if save_path is not None:
-            # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            plt.close()  # Close the figure to free memory
+            plt.close() 
             print(f"Plot saved to: {save_path}")
         else:
             plt.show() 
