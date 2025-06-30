@@ -220,12 +220,7 @@ def main():
 
     Q_5_5(device)
     Q_5_6(device)
-
-
-
-
-    
-        
+  
 
 if __name__ == "__main__":
     main()
